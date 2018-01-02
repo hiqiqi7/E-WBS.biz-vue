@@ -11,10 +11,10 @@
         <el-button type="primary" @click="onSubmit('form')">登录</el-button>
       </div>
       <div style="margin-bottom: 30px">
-        <el-input placeholder="请先登陆获取cookie" v-model="cookie_input" type="textarea" :readonly="true" :disabled="true" :autosize="{ minRows: 2, maxRows: 4 }" style="margin-bottom: 16px"  >
+        <el-input placeholder="请先使用帐号绑定的密钥登陆！" v-model="cookie_input" type="textarea" :readonly="true" :disabled="true" :autosize="{ minRows: 2, maxRows: 4 }" style="margin-bottom: 16px">
           <!-- :readonly="true" :disabled="true"  -->
         </el-input>
-        <el-button type="danger" round @click="delCookie" disabled>清空</el-button><!-- disabled -->
+        <el-button type="danger" round @click="delCookie">登出</el-button><!-- disabled -->
       </div>
       <div v-for="(index) in 10" :key="index">
         <el-checkbox v-model="checkedCities[index]" checked disabled>
@@ -42,7 +42,7 @@
           <el-switch v-model="violenceData" @change="violence()" active-color="#13ce66" inactive-color="#ff4949" active-text="暴力模式"></el-switch>
           <br>
           注：强制抢挂最近九份暂未开始售卖的股票<br>
-          &nbsp&nbsp&nbsp开启后影响正常抢挂，风险未知，开启后20秒自动关闭
+          &nbsp&nbsp&nbsp开启后影响正常抢挂，风险未知，开启后30秒自动关闭
         </div>
         <div style="margin-bottom: 25px">
           <el-input v-model="Qty" style="width: 165px; margin-right: 10px;">
@@ -64,7 +64,6 @@
           <el-switch v-model="salesValue" active-color="#13ce66" inactive-color="#ff4949" active-text="自动出售" disabled></el-switch>
         </div>
       </div>
-      
       <div>
         <el-table :data="resStatus" align="center" height="520" style="margin-bottom: 16px">
           <el-table-column prop="id" label="#" width="65"></el-table-column>
@@ -87,10 +86,12 @@
   export default {
     data () {
       return {
+        sale_setInterval: '', // 绑定自动出售定时器
         checkedCities: {},
         // lwn5555---qmy720419
         // lzl8888---lzl667095
         webkey: '',
+        cookie: '',
         cookie_input: '', // cooke输入框
         violenceData: '', // 暴力模式
         sq: '1', // 出售股票类型
@@ -128,7 +129,7 @@
     // 侦听按钮发生改变时，改变查询状态
     watch: {
       cookie_input (val) {
-        if (val.length >= 10) {
+        if (val === '登录成功！') {
           console.log('cookie is ok')
           this.sales()
         }
@@ -147,7 +148,8 @@
         // 拼接表单post密钥，后台登录获取cookie，成功返回cookie，否则弹窗警告
         postAPI.post(payload).then((resLoginStatus) => {
           if (resLoginStatus.status === 302) {
-            this.cookie_input = resLoginStatus.cookie
+            this.cookie = resLoginStatus.cookie // 302状态登录成功，将cookie存入变量
+            this.cookie_input = '登录成功！' // input存入登录成功状态
           } else if (resLoginStatus.status === '500') {
             this.open(resLoginStatus.status)
           } else if (resLoginStatus.status === '0') {
@@ -157,7 +159,7 @@
       },
       // 带登录成功后的cookie post请求sales
       sales () {
-        setInterval(() => {
+        this.sale_setInterval = setInterval(() => {
           // 判断时候获取到价格ID
           if (Number(this.priceList[9].ID)) {
           // if (this.priceList[9].ID) {
@@ -168,7 +170,7 @@
               ID.push(temp[index].ID)
             }
             let payload = {
-              cookie: this.cookie_input,
+              cookie: this.cookie,
               violence: this.violenceData,
               sq: this.sq,
               ID: ID,
@@ -179,30 +181,30 @@
               this.resSales = resSales
             })
           }
-        }, 2000)
+        }, 1000)
       },
-      // 暴力模式开启二十秒后自动关闭
+      // 暴力模式开启三十秒后自动关闭
       violence () {
         setTimeout(() => {
           this.violenceData = false
-        }, 20000)
+        }, 30000)
       },
       // 带登录成功后的cookie post请求销售状态
       price () {
         setInterval(() => {
-          if (this.cookie_input.length >= 10) {
-            let cookie = { cookie: this.cookie_input }
+          if (this.cookie.length >= 10) {
+            let cookie = { cookie: this.cookie }
             postAPI.priceList(cookie).then((resPrice) => {
               this.priceList = resPrice
               this.maxPrice = Number(resPrice['10'].price) + Number(0.01)
             })
           }
-        }, 10000)
+        }, 5000)
       },
       status () {
         setInterval(() => {
-          if (this.cookie_input.length >= 10) {
-            let cookie = { cookie: this.cookie_input }
+          if (this.cookie.length >= 10) {
+            let cookie = { cookie: this.cookie }
             postAPI.status(cookie).then((resStatus) => {
               this.resStatus = resStatus
             })
@@ -223,7 +225,9 @@
       },
       // 清空input中的coolie数据
       delCookie () {
-        this.cookie_input = ''
+        this.cookie = ''
+        this.cookie_input = '请先登录'
+        clearInterval(this.sale_setInterval) // 停止自动出售定时器
       }
     }
   }
