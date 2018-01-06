@@ -1,9 +1,9 @@
 
 import axios from '@/axios'
 
-export async function post (form) {
+export async function login (form) {
   try {
-    const response = await axios.post('/', form)
+    const response = await axios.post('/login', form)
     return response.data
   } catch (err) {
     console.log('message', err)

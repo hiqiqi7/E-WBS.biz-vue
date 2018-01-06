@@ -146,18 +146,18 @@
           webkey: this.webkey
         }
         // 拼接表单post密钥，后台登录获取cookie，成功返回cookie，否则弹窗警告
-        postAPI.post(payload).then((resLoginStatus) => {
+        postAPI.login(payload).then((resLoginStatus) => {
           if (resLoginStatus.status === 302) {
             this.cookie = resLoginStatus.cookie // 302状态登录成功，将cookie存入变量
             this.cookie_input = '登录成功！' // input存入登录成功状态
           } else if (resLoginStatus.status === '500') {
-            this.open(resLoginStatus.status)
+            this.open(resLoginStatus.status) // 弹窗警告帐号密码错误
           } else if (resLoginStatus.status === '0') {
-            this.open(resLoginStatus.status)
+            this.open(resLoginStatus.status) // 弹窗警告密钥错误
           }
         })
       },
-      // 带登录成功后的cookie post请求sales
+      // 带登录成功后的cookie post请求sales 默认一秒一次
       sales () {
         this.sale_setInterval = setInterval(() => {
           // 判断时候获取到价格ID
@@ -189,7 +189,7 @@
           this.violenceData = false
         }, 30000)
       },
-      // 带登录成功后的cookie post请求销售状态
+      // 带登录成功后的cookie post请求出售价格列表 默认五秒一次
       price () {
         setInterval(() => {
           if (this.cookie.length >= 10) {
@@ -201,6 +201,7 @@
           }
         }, 5000)
       },
+       // 带登录成功后的cookie post请求卖股订单列表 默认十秒一次
       status () {
         setInterval(() => {
           if (this.cookie.length >= 10) {
@@ -209,7 +210,7 @@
               this.resStatus = resStatus
             })
           }
-        }, 15000)
+        }, 10000)
       },
       // 弹窗警告
       open (loginStatus) {
@@ -227,6 +228,19 @@
       delCookie () {
         this.cookie = ''
         this.cookie_input = '请先登录'
+        this.priceList = {
+          1: {ID: '等待加载...', price: '...', Balance: '...'},
+          2: {ID: '等待加载...', price: '...', Balance: '...'},
+          3: {ID: '等待加载...', price: '...', Balance: '...'},
+          4: {ID: '等待加载...', price: '...', Balance: '...'},
+          5: {ID: '等待加载...', price: '...', Balance: '...'},
+          6: {ID: '等待加载...', price: '...', Balance: '...'},
+          7: {ID: '等待加载...', price: '...', Balance: '...'},
+          8: {ID: '等待加载...', price: '...', Balance: '...'},
+          9: {ID: '等待加载...', price: '...', Balance: '...'},
+          10: {ID: '等待加载...', price: '...', Balance: '...'}
+        }
+        this.resStatus = []
         clearInterval(this.sale_setInterval) // 停止自动出售定时器
       }
     }
