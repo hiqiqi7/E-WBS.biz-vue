@@ -66,7 +66,7 @@
       </div>
       <div>
         <el-table :data="resStatus" align="center" height="520" style="margin-bottom: 16px">
-          <el-table-column prop="id" label="#" width="65"></el-table-column>
+          <el-table-column prop="list" label="#" width="65"></el-table-column>
           <el-table-column prop="time" label="日期" width="200"></el-table-column>
           <el-table-column prop="price" label="价格" width="65"></el-table-column>
           <el-table-column prop="count" label="数量" width="65"></el-table-column>
@@ -90,8 +90,9 @@
         checkedCities: {},
         // lwn5555---qmy720419
         // lzl8888---lzl667095
-        webkey: '',
-        cookie: '',
+        webkey: '', // 用户卡密
+        hidden_webkey: '', // 隐藏的用户卡密（后台记录用）
+        cookie: '', // 用户cookie
         cookie_input: '', // cooke输入框
         violenceData: '', // 暴力模式
         sq: '1', // 出售股票类型
@@ -142,8 +143,10 @@
     },
     methods: {
       onSubmit (form) {
+        this.hidden_webkey = this.webkey // 后台记录用户密钥
+        // 拼接post登录表单
         let payload = {
-          webkey: this.webkey
+          webkey: this.webkey// 用户密钥
         }
         // 拼接表单post密钥，后台登录获取cookie，成功返回cookie，否则弹窗警告
         postAPI.login(payload).then((resLoginStatus) => {
@@ -162,13 +165,13 @@
         this.sale_setInterval = setInterval(() => {
           // 判断时候获取到价格ID
           if (Number(this.priceList[9].ID)) {
-          // if (this.priceList[9].ID) {
-            // 提取ID值
+            // 提取价格列表的所有ID值
             let temp = this.priceList
             let ID = []
             for (let index in temp) {
               ID.push(temp[index].ID)
             }
+            // 生成表单
             let payload = {
               cookie: this.cookie,
               violence: this.violenceData,
@@ -201,16 +204,20 @@
           }
         }, 5000)
       },
-       // 带登录成功后的cookie post请求卖股订单列表 默认十秒一次
+       // 带登录成功后的cookie post请求卖股订单列表 默认五秒一次
       status () {
         setInterval(() => {
           if (this.cookie.length >= 10) {
-            let cookie = { cookie: this.cookie }
-            postAPI.status(cookie).then((resStatus) => {
+            // 生成表单，传webkey给后台
+            let payload = {
+              webkey: this.hidden_webkey,
+              cookie: this.cookie
+            }
+            postAPI.status(payload).then((resStatus) => {
               this.resStatus = resStatus
             })
           }
-        }, 10000)
+        }, 5000)
       },
       // 弹窗警告
       open (loginStatus) {
